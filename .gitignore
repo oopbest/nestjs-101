@@ -42,3 +42,14 @@ Thumbs.db
 # Database (SQLite)
 *.db
 *.db-journal
+
+/src/generated/prisma
+
+# AI Agent Skills (Prisma)
+.claude/
+.windsurf/
+.agents/
+skills-lock.json
+
+# TypeScript Build Info
+*.tsbuildinfo

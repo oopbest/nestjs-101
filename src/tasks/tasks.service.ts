@@ -1,53 +1,61 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto.js';
 import { UpdateTaskDto } from './dto/update-task.dto.js';
-import { Task, TaskStatus } from './entities/task.entity.js';
+import { PrismaService } from '../prisma/prisma.service.js'; // 👈 1. import PrismaService
 
 @Injectable()
 export class TasksService {
-  private tasks: Task[] = [];
-  private nextId = 1;
+  // 👈 2. Inject PrismaService ผ่าน Constructor
+  constructor(private readonly prisma: PrismaService) {}
 
-  create(createTaskDto: CreateTaskDto): Task {
-    const { title, description, status } = createTaskDto;
-
-    const task: Task = {
-      id: this.nextId++,
-      title,
-      description: description ?? '', // if undefined or null, set to empty string
-      status: status ?? TaskStatus.PENDING, // if undefined or null, set to pending
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.tasks.push(task);
-    return task;
+  // 1. Create: บันทึกลง SQLite
+  async create(createTaskDto: CreateTaskDto) {
+    return this.prisma.task.create({
+      data: {
+        title: createTaskDto.title,
+        description: createTaskDto.description,
+        status: createTaskDto.status,
+      },
+    });
   }
 
-  findAll(): Task[] {
-    return this.tasks;
+  // 2. Find All: ดึงข้อมูลทั้งหมด เรียงจากใหม่ไปเก่า
+  async findAll() {
+    return this.prisma.task.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
-  findOne(id: number): Task {
-    const task = this.tasks.find((task) => task.id === id);
+  // 3. Find One: ค้นหาตาม ID
+  async findOne(id: number) {
+    const task = await this.prisma.task.findUnique({
+      where: { id },
+    });
+
     if (!task) {
       throw new NotFoundException(`Task with ID ${id} not found`);
     }
+
     return task;
   }
 
-  update(id: number, updateTaskDto: UpdateTaskDto): Task {
-    const task = this.findOne(id);
+  // 4. Update: อัปเดตข้อมูลตาม ID
+  async update(id: number, updateTaskDto: UpdateTaskDto) {
+    // ตรวจสอบก่อนว่ามีข้อมูล ID นี้จริงไหม (ถ้าไม่มีจะ throw 404 จาก findOne)
+    await this.findOne(id);
 
-    Object.assign(task, updateTaskDto);
-    task.updatedAt = new Date();
-    return task;
+    return this.prisma.task.update({
+      where: { id },
+      data: updateTaskDto,
+    });
   }
 
-  remove(id: number) {
-    const task = this.findOne(id);
+  // 5. Remove: ลบข้อมูลตาม ID
+  async remove(id: number) {
+    await this.findOne(id);
 
-    this.tasks = this.tasks.filter((task) => task.id !== id);
-    return task;
+    return this.prisma.task.delete({
+      where: { id },
+    });
   }
 }
