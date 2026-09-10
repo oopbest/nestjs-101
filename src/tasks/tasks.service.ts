@@ -15,6 +15,7 @@ export class TasksService {
         title: createTaskDto.title,
         description: createTaskDto.description,
         status: createTaskDto.status,
+        userId: 1,
       },
     });
   }
