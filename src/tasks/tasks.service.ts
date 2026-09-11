@@ -9,28 +9,29 @@ export class TasksService {
   constructor(private readonly prisma: PrismaService) {}
 
   // 1. Create: บันทึกลง SQLite
-  async create(createTaskDto: CreateTaskDto) {
+  async create(createTaskDto: CreateTaskDto, userId: number) {
     return this.prisma.task.create({
       data: {
         title: createTaskDto.title,
         description: createTaskDto.description,
         status: createTaskDto.status,
-        userId: 1,
+        userId,
       },
     });
   }
 
   // 2. Find All: ดึงข้อมูลทั้งหมด เรียงจากใหม่ไปเก่า
-  async findAll() {
+  async findAll(userId: number) {
     return this.prisma.task.findMany({
+      where: { userId },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   // 3. Find One: ค้นหาตาม ID
-  async findOne(id: number) {
-    const task = await this.prisma.task.findUnique({
-      where: { id },
+  async findOne(id: number, userId: number) {
+    const task = await this.prisma.task.findFirst({
+      where: { id, userId },
     });
 
     if (!task) {
@@ -41,9 +42,9 @@ export class TasksService {
   }
 
   // 4. Update: อัปเดตข้อมูลตาม ID
-  async update(id: number, updateTaskDto: UpdateTaskDto) {
+  async update(id: number, updateTaskDto: UpdateTaskDto, userId: number) {
     // ตรวจสอบก่อนว่ามีข้อมูล ID นี้จริงไหม (ถ้าไม่มีจะ throw 404 จาก findOne)
-    await this.findOne(id);
+    await this.findOne(id, userId);
 
     return this.prisma.task.update({
       where: { id },
@@ -52,8 +53,8 @@ export class TasksService {
   }
 
   // 5. Remove: ลบข้อมูลตาม ID
-  async remove(id: number) {
-    await this.findOne(id);
+  async remove(id: number, userId: number) {
+    await this.findOne(id, userId);
 
     return this.prisma.task.delete({
       where: { id },
