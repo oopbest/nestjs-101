@@ -20,11 +20,14 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
+import { RolesGuard } from '../auth/guards/roles.guard.js';
+import { Roles } from '../auth/decorators/roles.decorator.js';
+import { Role } from '../auth/enums/role.enum.js';
 
 @ApiTags('tasks')
 @ApiBearerAuth('JWT-auth')
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('tasks')
-@UseGuards(JwtAuthGuard)
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
@@ -50,6 +53,16 @@ export class TasksController {
   @Get()
   findAll(@CurrentUser('id') userId: number) {
     return this.tasksService.findAll(userId);
+  }
+
+  // 👑 [ADMIN ONLY] ต้องวางไว้ก่อน @Get(':id')
+  @ApiOperation({ summary: '[ADMIN ONLY] Get all tasks from all users' })
+  @ApiResponse({ status: 200, description: 'All tasks retrieved successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden resource' })
+  @Roles(Role.ADMIN) // 👈 แปะป้ายบอกว่าต้องมีสิทธิ์ ADMIN เท่านั้น!
+  @Get('admin/all')
+  findAllAdmin() {
+    return this.tasksService.findAllAdmin();
   }
 
   // Get a single task by ID.

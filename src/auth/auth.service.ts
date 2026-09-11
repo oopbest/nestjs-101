@@ -16,7 +16,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  // 1. สมัครสมาชิก
+  // 1. Register
   async register(registerDto: RegisterDto) {
     const { email, password, name } = registerDto;
 
@@ -46,11 +46,12 @@ export class AuthService {
       id: user.id,
       email: user.email,
       name: user.name,
+      role: user.role,
       createdAt: user.createdAt,
     };
   }
 
-  // 2. ล็อกอิน
+  // 2. Login
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
@@ -71,7 +72,7 @@ export class AuthService {
     }
 
     // สร้าง JWT Payload (sub = Subject คือมาตรฐานที่ใช้เก็บ User ID)
-    const payload = { sub: user.id, email: user.email };
+    const payload = { sub: user.id, email: user.email, role: user.role };
 
     return {
       access_token: await this.jwtService.signAsync(payload),

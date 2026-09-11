@@ -60,4 +60,22 @@ export class TasksService {
       where: { id },
     });
   }
+
+  // 👑 Admin: ดึง Task ทั้งหมดของทุกคนในระบบ พร้อมข้อมูลเจ้าของงาน
+  async findAllAdmin() {
+    return this.prisma.task.findMany({
+      include: {
+        // ใช้ include เพื่อ JOIN ตาราง User มาแสดงชื่อและอีเมล (แต่ไม่ดึง password)
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }
